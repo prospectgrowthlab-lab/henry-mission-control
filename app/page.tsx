@@ -12,9 +12,9 @@ import {
   mockAgentStatus,
   mockTasks,
   mockBandwidth,
-  mockCostReport,
   mockHeartbeat,
 } from '@/data/mockData'
+import { useUsageData, useCostReportData, useActiveSessions } from '@/hooks/useUsageData'
 import { useEffect, useState } from 'react'
 
 type ActiveSection = 'agent' | 'tokens' | 'heartbeat' | 'kanban' | 'cost'
@@ -27,17 +27,23 @@ type ActiveSection = 'agent' | 'tokens' | 'heartbeat' | 'kanban' | 'cost'
  * - Responsive grid layout (sidebar + main content)
  * - Multiple dashboard sections:
  *   - Agent Status: Real-time agent state and uptime
- *   - Token Usage: Token consumption and rate limiting
+ *   - Token Usage: Token consumption and rate limiting (LIVE)
  *   - Heartbeat Monitor: System health checks
  *   - Kanban Board: Task management with drag-drop ready UI
- *   - Cost Report: Daily spending and model breakdown
+ *   - Cost Report: Daily spending and model breakdown (LIVE)
  * - Enhanced glassmorphism with Apple Glass aesthetic
  * - Mobile responsive design
+ * - Auto-refreshing data every 30 seconds
  */
 export default function Dashboard() {
   const [currentTime, setCurrentTime] = useState<string>('')
   const [activeSection, setActiveSection] = useState<ActiveSection>('agent')
   const [tasks, setTasks] = useState(mockTasks)
+
+  // Fetch live data
+  const { data: usageData } = useUsageData(30000)
+  const { data: costData } = useCostReportData(30000)
+  const { data: sessionsData } = useActiveSessions(30000)
 
   useEffect(() => {
     // Update time every second
@@ -74,6 +80,28 @@ export default function Dashboard() {
     setActiveSection(section)
   }
 
+  // Format currency for display
+  const formatCurrency = (num: number) => {
+    return `$${num.toFixed(2)}`
+  }
+
+  // Format tokens for display
+  const formatTokens = (num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`
+    }
+    if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K`
+    }
+    return num.toString()
+  }
+
+  // Get stats for the quick stats bar
+  const totalCost = costData?.summary.totalCost || 0
+  const budgetPercentage = costData?.summary.budgetUsed || 0
+  const tokensToday = usageData?.tokensUsedToday || 0
+  const activeSessions = sessionsData?.count || 0
+
   // Render different sections based on active navigation
   const renderSection = () => {
     switch (activeSection) {
@@ -90,7 +118,7 @@ export default function Dashboard() {
           </>
         )
       case 'tokens':
-        return <TokenUsage metrics={mockBandwidth} />
+        return <TokenUsage />
       case 'heartbeat':
         return (
           <div className="grid grid-cols-1 gap-6 mb-6">
@@ -103,7 +131,7 @@ export default function Dashboard() {
       case 'cost':
         return (
           <div className="grid grid-cols-1 gap-6 mb-6">
-            <CostReport data={mockCostReport} />
+            <CostReport />
             <BandwidthCapacity metrics={mockBandwidth} />
           </div>
         )
@@ -150,19 +178,29 @@ export default function Dashboard() {
               <p className="text-sm font-semibold text-white">Operational</p>
             </div>
             <div className="glass-card p-4 rounded-xl text-center">
-              <p className="text-2xl font-bold text-blue-400">2</p>
+              <p className="text-2xl font-bold text-blue-400">{activeSessions}</p>
               <p className="text-xs text-gray-400 mt-2">Active</p>
               <p className="text-sm font-semibold text-white">Sessions</p>
             </div>
             <div className="glass-card p-4 rounded-xl text-center">
-              <p className="text-2xl font-bold text-cyan-400">145K</p>
+              <p className="text-2xl font-bold text-cyan-400">
+                {formatTokens(tokensToday)}
+              </p>
               <p className="text-xs text-gray-400 mt-2">Tokens Today</p>
-              <p className="text-sm font-semibold text-white">14.5% Budget</p>
+              <p className="text-sm font-semibold text-white">
+                {tokensToday > 0
+                  ? `${((tokensToday / (30000000 / 30)) * 100).toFixed(1)}% Budget`
+                  : '0% Budget'}
+              </p>
             </div>
             <div className="glass-card p-4 rounded-xl text-center">
-              <p className="text-2xl font-bold text-purple-400">$0.62</p>
+              <p className="text-2xl font-bold text-purple-400">
+                {formatCurrency(totalCost)}
+              </p>
               <p className="text-xs text-gray-400 mt-2">Spent Today</p>
-              <p className="text-sm font-semibold text-white">20.7% Budget</p>
+              <p className="text-sm font-semibold text-white">
+                {budgetPercentage.toFixed(1)}% Budget
+              </p>
             </div>
           </div>
 

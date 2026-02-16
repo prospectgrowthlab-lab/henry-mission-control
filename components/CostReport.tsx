@@ -1,59 +1,81 @@
 'use client'
 
-import { CostReport as CostReportType } from '@/data/mockData'
+import { useCostReportData } from '@/hooks/useUsageData'
 
-interface CostReportProps {
-  data: CostReportType
-}
+/**
+ * Cost Report Component
+ *
+ * Displays real-time cost tracking against the $3/day budget
+ * Shows breakdown by model (Haiku/Sonnet/Opus)
+ * Updates automatically every 30 seconds
+ */
 
 const getModelColor = (model: string) => {
-  switch (model) {
-    case 'haiku':
-      return 'text-blue-400'
-    case 'sonnet':
-      return 'text-purple-400'
-    case 'opus':
-      return 'text-orange-400'
-    default:
-      return 'text-gray-400'
-  }
+  const lower = model.toLowerCase()
+  if (lower.includes('haiku')) return 'text-blue-400'
+  if (lower.includes('opus')) return 'text-orange-400'
+  return 'text-purple-400' // sonnet
 }
 
 const getModelBgColor = (model: string) => {
-  switch (model) {
-    case 'haiku':
-      return 'bg-blue-500 bg-opacity-20 border-blue-500'
-    case 'sonnet':
-      return 'bg-purple-500 bg-opacity-20 border-purple-500'
-    case 'opus':
-      return 'bg-orange-500 bg-opacity-20 border-orange-500'
-    default:
-      return 'bg-gray-500 bg-opacity-20 border-gray-500'
-  }
+  const lower = model.toLowerCase()
+  if (lower.includes('haiku')) return 'bg-blue-500 bg-opacity-20 border-blue-500'
+  if (lower.includes('opus')) return 'bg-orange-500 bg-opacity-20 border-orange-500'
+  return 'bg-purple-500 bg-opacity-20 border-purple-500' // sonnet
 }
 
 const getModelIcon = (model: string) => {
-  switch (model) {
-    case 'haiku':
-      return '⚡'
-    case 'sonnet':
-      return '🎵'
-    case 'opus':
-      return '👑'
-    default:
-      return '📦'
-  }
+  const lower = model.toLowerCase()
+  if (lower.includes('haiku')) return '⚡'
+  if (lower.includes('opus')) return '👑'
+  return '🎵' // sonnet
 }
 
 const formatCurrency = (num: number) => {
   return `$${num.toFixed(4)}`
 }
 
-export default function CostReportComponent({ data }: CostReportProps) {
-  const budgetRemaining = data.dailyBudget - data.totalCost
-  const budgetPercentage = (data.totalCost / data.dailyBudget) * 100
+export default function CostReportComponent() {
+  const { data, loading, error } = useCostReportData(30000)
+
+  if (error) {
+    return (
+      <div className="glass-card p-6 md:p-8">
+        <h2 className="text-xl md:text-2xl font-bold text-white mb-6">
+          Cost Report
+        </h2>
+        <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded-lg p-4 text-red-300">
+          <p className="font-semibold">Error loading cost data</p>
+          <p className="text-sm mt-1">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading || !data) {
+    return (
+      <div className="glass-card p-6 md:p-8">
+        <h2 className="text-xl md:text-2xl font-bold text-white mb-6">
+          Cost Report
+        </h2>
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-700 rounded mb-4 w-1/3"></div>
+          <div className="space-y-3">
+            <div className="h-4 bg-gray-700 rounded"></div>
+            <div className="h-4 bg-gray-700 rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const summary = data.summary
   const budgetHealth =
-    budgetPercentage >= 90 ? 'text-red-400' : budgetPercentage >= 70 ? 'text-yellow-400' : 'text-green-400'
+    summary.budgetUsed >= 90
+      ? 'text-red-400'
+      : summary.budgetUsed >= 70
+        ? 'text-yellow-400'
+        : 'text-green-400'
 
   return (
     <div className="glass-card p-6 md:p-8">
@@ -67,15 +89,15 @@ export default function CostReportComponent({ data }: CostReportProps) {
           <div>
             <p className="text-sm text-gray-400 mb-1">Today's Spending</p>
             <p className="text-3xl font-bold text-white">
-              {formatCurrency(data.totalCost)}
+              {formatCurrency(summary.totalCost)}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Daily budget: {formatCurrency(data.dailyBudget)}
+              Daily budget: {formatCurrency(summary.dailyBudget)}
             </p>
           </div>
           <div className="text-right">
             <p className={`text-2xl font-bold ${budgetHealth}`}>
-              {budgetPercentage.toFixed(0)}%
+              {summary.budgetUsed.toFixed(0)}%
             </p>
             <p className="text-xs text-gray-400 mt-1">Used</p>
           </div>
@@ -85,7 +107,7 @@ export default function CostReportComponent({ data }: CostReportProps) {
         <div className="w-full bg-white bg-opacity-10 rounded-full h-2 overflow-hidden">
           <div
             className="bg-gradient-to-r from-cyan-500 to-blue-500 h-full rounded-full transition-all"
-            style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
+            style={{ width: `${Math.min(summary.budgetUsed, 100)}%` }}
           />
         </div>
 
@@ -93,7 +115,7 @@ export default function CostReportComponent({ data }: CostReportProps) {
         <div className="mt-3 flex justify-between items-center text-sm">
           <span className="text-gray-400">Remaining:</span>
           <span className="font-semibold text-green-400">
-            {formatCurrency(Math.max(0, budgetRemaining))}
+            {formatCurrency(Math.max(0, summary.budgetRemaining))}
           </span>
         </div>
       </div>
@@ -104,44 +126,55 @@ export default function CostReportComponent({ data }: CostReportProps) {
       </h3>
 
       <div className="space-y-3 mb-6">
-        {data.modelUsage.map((usage) => {
-          const totalCost = usage.costInput + usage.costOutput
-          return (
-            <div
-              key={usage.model}
-              className={`rounded-lg p-4 border border-opacity-20 ${getModelBgColor(usage.model)}`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">{getModelIcon(usage.model)}</span>
+        {data.modelUsage.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <p className="text-sm">No usage data yet today</p>
+          </div>
+        ) : (
+          data.modelUsage.map((usage) => {
+            const totalCost = usage.totalCost
+            return (
+              <div
+                key={usage.model}
+                className={`rounded-lg p-4 border border-opacity-20 ${getModelBgColor(usage.model)}`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{getModelIcon(usage.model)}</span>
+                    <div>
+                      <h4
+                        className={`font-semibold capitalize ${getModelColor(usage.model)}`}
+                      >
+                        {usage.model}
+                      </h4>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {usage.inputTokens.toLocaleString()} in /
+                        {usage.outputTokens.toLocaleString()} out
+                      </p>
+                    </div>
+                  </div>
+                  <p
+                    className={`font-bold text-lg ${getModelColor(usage.model)}`}
+                  >
+                    {formatCurrency(totalCost)}
+                  </p>
+                </div>
+
+                {/* Cost breakdown */}
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-300 pl-7">
                   <div>
-                    <h4 className={`font-semibold capitalize ${getModelColor(usage.model)}`}>
-                      {usage.model}
-                    </h4>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {usage.inputTokens.toLocaleString()} in / {usage.outputTokens.toLocaleString()} out
-                    </p>
+                    <p className="text-gray-500">Input cost:</p>
+                    <p className="font-mono">{formatCurrency(usage.costInput)}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Output cost:</p>
+                    <p className="font-mono">{formatCurrency(usage.costOutput)}</p>
                   </div>
                 </div>
-                <p className={`font-bold text-lg ${getModelColor(usage.model)}`}>
-                  {formatCurrency(totalCost)}
-                </p>
               </div>
-
-              {/* Cost breakdown */}
-              <div className="grid grid-cols-2 gap-2 text-xs text-gray-300 pl-7">
-                <div>
-                  <p className="text-gray-500">Input cost:</p>
-                  <p className="font-mono">{formatCurrency(usage.costInput)}</p>
-                </div>
-                <div>
-                  <p className="text-gray-500">Output cost:</p>
-                  <p className="font-mono">{formatCurrency(usage.costOutput)}</p>
-                </div>
-              </div>
-            </div>
-          )
-        })}
+            )
+          })
+        )}
       </div>
 
       {/* Total Summary */}
@@ -149,8 +182,12 @@ export default function CostReportComponent({ data }: CostReportProps) {
         <div className="flex justify-between items-center">
           <p className="text-gray-300 font-semibold">Total Today</p>
           <p className="text-2xl font-bold text-white">
-            {formatCurrency(data.totalCost)}
+            {formatCurrency(summary.totalCost)}
           </p>
+        </div>
+        <div className="mt-2 text-xs text-gray-400 flex justify-between">
+          <span>{summary.totalMessages} messages processed</span>
+          <span>{summary.totalTokens.toLocaleString()} tokens</span>
         </div>
       </div>
     </div>
