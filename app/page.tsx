@@ -7,6 +7,7 @@ import HeartbeatSchedule from '@/components/HeartbeatSchedule'
 import Sidebar from '@/components/Sidebar'
 import KanbanBoard from '@/components/KanbanBoard'
 import TokenUsage from '@/components/TokenUsage'
+import LiveWebcam from '@/components/LiveWebcam'
 import {
   mockAgentStatus,
   mockTasks,
@@ -78,10 +79,15 @@ export default function Dashboard() {
     switch (activeSection) {
       case 'agent':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <AgentStatus status={mockAgentStatus} />
-            <HeartbeatSchedule data={mockHeartbeat} />
-          </div>
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <AgentStatus status={mockAgentStatus} />
+              <HeartbeatSchedule data={mockHeartbeat} />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <LiveWebcam />
+            </div>
+          </>
         )
       case 'tokens':
         return <TokenUsage metrics={mockBandwidth} />
@@ -114,7 +120,7 @@ export default function Dashboard() {
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
         {/* Header with time */}
-        <div className="sticky top-0 z-30 glass-card rounded-none md:rounded-b-2xl backdrop-blur-md border-b border-white border-opacity-20 md:ml-0">
+        <div className="sticky top-0 z-30 glass-card rounded-none md:rounded-b-2xl backdrop-blur-md border-b border-white border-opacity-20 md:ml-4 mt-4 md:mt-0">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4 md:py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-white">
