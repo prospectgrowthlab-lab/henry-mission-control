@@ -20,14 +20,39 @@ body {
   min-height: 100vh;
 }
 
-/* Glassmorphism card styling */
+/* Enhanced Glassmorphism - Apple Glass Aesthetic
+ * Features:
+ * - Deep frosted glass effect with proper transparency
+ * - Multi-layer blur for depth perception
+ * - Subtle gradient overlay for visual interest
+ * - High contrast borders for modern look
+ */
 .glass-card {
-  @apply relative overflow-hidden rounded-2xl border border-white border-opacity-20 bg-white bg-opacity-10 backdrop-blur-md shadow-2xl;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  @apply relative overflow-hidden rounded-2xl border border-white border-opacity-20 bg-white bg-opacity-10 backdrop-blur-xl shadow-2xl;
+  /* Frosted glass background */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  /* Smooth shadows for depth */
+  box-shadow:
+    0 8px 32px 0 rgba(31, 38, 135, 0.37),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.3s ease;
 }
 
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 12px 48px 0 rgba(31, 38, 135, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient overlay for subtle depth */
 .glass-card::before {
   content: '';
   position: absolute;
@@ -35,8 +60,9 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
   pointer-events: none;
+  border-radius: inherit;
 }
 
 /* Subtle animation for real-time feel */
@@ -65,4 +91,23 @@ body {
 
 .status-dot-online {
   animation: status-online 2s ease-in-out infinite;
+}
+
+/* Smooth scrollbar styling for modern look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }

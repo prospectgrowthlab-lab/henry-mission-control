@@ -12,6 +12,7 @@ export interface Task {
   progress: number;
   startTime: Date;
   estimatedEnd?: Date;
+  model?: 'haiku' | 'sonnet' | 'opus'; // Model being used for this task
 }
 
 export interface BandwidthMetrics {
@@ -60,6 +61,7 @@ export const mockTasks: Task[] = [
     status: 'running',
     progress: 65,
     startTime: new Date(Date.now() - 45 * 60000), // 45 mins ago
+    model: 'sonnet', // Using Sonnet for main session
   },
   {
     id: 'sub-1',
@@ -68,6 +70,7 @@ export const mockTasks: Task[] = [
     status: 'running',
     progress: 80,
     startTime: new Date(Date.now() - 20 * 60000), // 20 mins ago
+    model: 'haiku', // Using Haiku for code generation
   },
   {
     id: 'task-1',
@@ -76,6 +79,7 @@ export const mockTasks: Task[] = [
     status: 'queued',
     progress: 0,
     startTime: new Date(Date.now() + 4 * 60000), // In 4 mins
+    model: 'haiku', // Haiku for lightweight tasks
   },
   {
     id: 'sub-2',
@@ -84,6 +88,7 @@ export const mockTasks: Task[] = [
     status: 'completed',
     progress: 100,
     startTime: new Date(Date.now() - 3 * 3600000), // 3 hours ago
+    model: 'haiku',
   },
 ]
 
