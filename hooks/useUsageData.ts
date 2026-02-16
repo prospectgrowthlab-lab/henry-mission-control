@@ -99,11 +99,63 @@ export function useUsageData(refreshInterval: number = 30000) {
   return { data, loading, error }
 }
 
+// Mock data for fallback
+const mockCostReportData: CostReportData = {
+  date: new Date().toISOString().split('T')[0],
+  modelUsage: [
+    {
+      model: 'haiku',
+      inputTokens: 125000,
+      outputTokens: 45000,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      totalTokens: 170000,
+      costInput: 0.0313,
+      costOutput: 0.0563,
+      costCacheRead: 0,
+      costCacheWrite: 0,
+      totalCost: 0.0876,
+      messageCount: 15,
+    },
+    {
+      model: 'sonnet',
+      inputTokens: 15000,
+      outputTokens: 8500,
+      cacheReadTokens: 0,
+      cacheWriteTokens: 0,
+      totalTokens: 23500,
+      costInput: 0.045,
+      costOutput: 0.1275,
+      costCacheRead: 0,
+      costCacheWrite: 0,
+      totalCost: 0.1725,
+      messageCount: 8,
+    },
+  ],
+  summary: {
+    totalCost: 0.26,
+    totalTokens: 193500,
+    totalMessages: 23,
+    inputTokens: 140000,
+    outputTokens: 53500,
+    cacheReadTokens: 0,
+    cacheWriteTokens: 0,
+    inputCost: 0.0763,
+    outputCost: 0.1838,
+    cacheReadCost: 0,
+    cacheWriteCost: 0,
+    dailyBudget: 3.0,
+    budgetUsed: 8.7,
+    budgetRemaining: 2.74,
+  },
+}
+
 // Hook for fetching cost report
 export function useCostReportData(refreshInterval: number = 30000) {
   const [data, setData] = useState<CostReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isMockData, setIsMockData] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,9 +168,12 @@ export function useCostReportData(refreshInterval: number = 30000) {
         const json = await response.json()
         setData(json)
         setError(null)
+        setIsMockData(false)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
-        console.error('Error fetching cost report:', err)
+        console.warn('Failed to fetch live data, using mock data:', err)
+        setData(mockCostReportData)
+        setIsMockData(true)
       } finally {
         setLoading(false)
       }
@@ -129,7 +184,7 @@ export function useCostReportData(refreshInterval: number = 30000) {
     return () => clearInterval(interval)
   }, [refreshInterval])
 
-  return { data, loading, error }
+  return { data, loading, error, isMockData }
 }
 
 // Hook for fetching active sessions

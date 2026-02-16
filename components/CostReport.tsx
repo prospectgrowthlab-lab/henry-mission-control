@@ -36,21 +36,7 @@ const formatCurrency = (num: number) => {
 }
 
 export default function CostReportComponent() {
-  const { data, loading, error } = useCostReportData(30000)
-
-  if (error) {
-    return (
-      <div className="glass-card p-6 md:p-8">
-        <h2 className="text-xl md:text-2xl font-bold text-white mb-6">
-          Cost Report
-        </h2>
-        <div className="bg-red-500 bg-opacity-20 border border-red-500 rounded-lg p-4 text-red-300">
-          <p className="font-semibold">Error loading cost data</p>
-          <p className="text-sm mt-1">{error}</p>
-        </div>
-      </div>
-    )
-  }
+  const { data, loading, error, isMockData } = useCostReportData(30000)
 
   if (loading || !data) {
     return (
@@ -79,9 +65,16 @@ export default function CostReportComponent() {
 
   return (
     <div className="glass-card p-6 md:p-8">
-      <h2 className="text-xl md:text-2xl font-bold text-white mb-6">
-        Cost Report
-      </h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl md:text-2xl font-bold text-white">
+          Cost Report
+        </h2>
+        {isMockData && (
+          <span className="text-xs px-2 py-1 rounded-full bg-yellow-500 bg-opacity-20 border border-yellow-500 text-yellow-400">
+            Mock Data
+          </span>
+        )}
+      </div>
 
       {/* Daily Budget Overview */}
       <div className="mb-8 bg-white bg-opacity-5 rounded-xl p-4 border border-white border-opacity-10">
