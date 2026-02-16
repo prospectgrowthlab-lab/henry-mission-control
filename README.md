@@ -275,3 +275,4 @@ npm run lint     # Run ESLint (if configured)
 
 **Version:** 1.0.0  
 **Last Updated:** February 2026
+
