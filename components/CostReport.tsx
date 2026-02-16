@@ -36,7 +36,7 @@ const formatCurrency = (num: number) => {
 }
 
 export default function CostReportComponent() {
-  const { data, loading, error, isMockData } = useCostReportData(30000)
+  const { data, loading, isMockData } = useCostReportData(30000)
 
   if (loading || !data) {
     return (
