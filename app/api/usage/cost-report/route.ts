@@ -81,17 +81,15 @@ export async function GET() {
               totalCacheWriteCost += usage.cost.cacheWrite || 0
 
               // Detect model type from model string
-              const modelStr = entry.message?.model || ''
-              let modelKey = modelStr
+              const modelStr = entry.message?.model?.toLowerCase() || ''
+              let modelType = 'unknown'
               
-              // Normalize to simple names
-              if (modelStr.toLowerCase().includes('haiku')) modelKey = 'haiku'
-              else if (modelStr.toLowerCase().includes('sonnet')) modelKey = 'sonnet'
-              else if (modelStr.toLowerCase().includes('opus')) modelKey = 'opus'
-              else modelKey = 'other'
+              if (modelStr.includes('haiku')) modelType = 'haiku'
+              else if (modelStr.includes('sonnet')) modelType = 'sonnet'
+              else if (modelStr.includes('opus')) modelType = 'opus'
 
-              if (!modelBreakdown[modelKey]) {
-                modelBreakdown[modelKey] = {
+              if (!modelBreakdown[modelType]) {
+                modelBreakdown[modelType] = {
                   inputTokens: 0,
                   outputTokens: 0,
                   cacheReadTokens: 0,
@@ -104,15 +102,15 @@ export async function GET() {
                 }
               }
 
-              modelBreakdown[modelKey].inputTokens += usage.input || 0
-              modelBreakdown[modelKey].outputTokens += usage.output || 0
-              modelBreakdown[modelKey].cacheReadTokens += usage.cacheRead || 0
-              modelBreakdown[modelKey].cacheWriteTokens += usage.cacheWrite || 0
-              modelBreakdown[modelKey].costInput += usage.cost.input || 0
-              modelBreakdown[modelKey].costOutput += usage.cost.output || 0
-              modelBreakdown[modelKey].costCacheRead += usage.cost.cacheRead || 0
-              modelBreakdown[modelKey].costCacheWrite += usage.cost.cacheWrite || 0
-              modelBreakdown[modelKey].messageCount++
+              modelBreakdown[modelType].inputTokens += usage.input || 0
+              modelBreakdown[modelType].outputTokens += usage.output || 0
+              modelBreakdown[modelType].cacheReadTokens += usage.cacheRead || 0
+              modelBreakdown[modelType].cacheWriteTokens += usage.cacheWrite || 0
+              modelBreakdown[modelType].costInput += usage.cost.input || 0
+              modelBreakdown[modelType].costOutput += usage.cost.output || 0
+              modelBreakdown[modelType].costCacheRead += usage.cost.cacheRead || 0
+              modelBreakdown[modelType].costCacheWrite += usage.cost.cacheWrite || 0
+              modelBreakdown[modelType].messageCount++
             }
           }
         } catch (parseError) {
@@ -125,32 +123,32 @@ export async function GET() {
     const dailyBudget = 3.0
     const budgetUsed = (totalCost / dailyBudget) * 100
     const budgetRemaining = Math.max(0, dailyBudget - totalCost)
+    const totalTokens = totalInputTokens + totalOutputTokens + totalCacheReadTokens + totalCacheWriteTokens
 
-    // Format model usage
-    const modelUsage = Object.entries(modelBreakdown).map(([model, data]) => ({
-      model,
-      inputTokens: data.inputTokens,
-      outputTokens: data.outputTokens,
-      cacheReadTokens: data.cacheReadTokens,
-      cacheWriteTokens: data.cacheWriteTokens,
-      totalTokens: data.inputTokens + data.outputTokens + data.cacheReadTokens + data.cacheWriteTokens,
-      costInput: parseFloat(data.costInput.toFixed(4)),
-      costOutput: parseFloat(data.costOutput.toFixed(4)),
-      costCacheRead: parseFloat(data.costCacheRead.toFixed(4)),
-      costCacheWrite: parseFloat(data.costCacheWrite.toFixed(4)),
-      totalCost: parseFloat((data.costInput + data.costOutput + data.costCacheRead + data.costCacheWrite).toFixed(4)),
-      messageCount: data.messageCount,
-    }))
-
-    // Sort by total cost descending
-    modelUsage.sort((a, b) => b.totalCost - a.totalCost)
+    // Format response
+    const modelUsage = Object.entries(modelBreakdown)
+      .filter(([_, data]) => data.inputTokens > 0 || data.outputTokens > 0)
+      .map(([model, data]) => ({
+        model,
+        inputTokens: data.inputTokens,
+        outputTokens: data.outputTokens,
+        cacheReadTokens: data.cacheReadTokens,
+        cacheWriteTokens: data.cacheWriteTokens,
+        totalTokens: data.inputTokens + data.outputTokens + data.cacheReadTokens + data.cacheWriteTokens,
+        costInput: parseFloat(data.costInput.toFixed(4)),
+        costOutput: parseFloat(data.costOutput.toFixed(4)),
+        costCacheRead: parseFloat(data.costCacheRead.toFixed(4)),
+        costCacheWrite: parseFloat(data.costCacheWrite.toFixed(4)),
+        totalCost: parseFloat((data.costInput + data.costOutput + data.costCacheRead + data.costCacheWrite).toFixed(4)),
+        messageCount: data.messageCount,
+      }))
 
     return NextResponse.json({
       date: today,
       modelUsage,
       summary: {
         totalCost: parseFloat(totalCost.toFixed(4)),
-        totalTokens: totalInputTokens + totalOutputTokens + totalCacheReadTokens + totalCacheWriteTokens,
+        totalTokens,
         totalMessages,
         inputTokens: totalInputTokens,
         outputTokens: totalOutputTokens,
@@ -168,7 +166,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error reading cost report data:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch cost report' },
+      { error: 'Failed to fetch cost report data' },
       { status: 500 }
     )
   }
